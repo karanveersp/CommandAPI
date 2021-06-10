@@ -10,6 +10,7 @@ using Npgsql;
 using AutoMapper;
 using System;
 using Newtonsoft.Json.Serialization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace CommandAPI
 {
@@ -34,6 +35,12 @@ namespace CommandAPI
 
             services.AddDbContext<CommandContext>(opts => opts.UseNpgsql(builder.ConnectionString));
 
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(opt => {
+                    opt.Audience = Configuration["ApplicationID"];
+                    opt.Authority = $"{Configuration["Instance"]}{Configuration["TenantID"]}";
+                });
+
             services.AddControllers().AddNewtonsoftJson(s => {
                 s.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
             });
@@ -55,6 +62,9 @@ namespace CommandAPI
             }
 
             app.UseRouting();
+
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
